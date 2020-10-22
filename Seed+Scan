@@ -1,0 +1,92 @@
+class BrushSeedScan{
+	constructor(img){
+		this.img = img;
+		this.maxBrightness = 100;
+		this.maxTries = 1000;
+		this.maxPoints = 100;
+		this.seeds=[];
+		this.type = 'RANDOM'
+	}
+	run(){
+		switch(this.type){
+			case 'RANDOM': this.typeRandom(); break;	
+			case 'GRID' : this.typeGrid(); break;
+			case 'MIXED': this.typeMixed(); break;
+			case 'SPREAD': this.typeSpread(); break;
+		}
+	}
+	typeSpread(){
+		let x=0,y=0,b,v,i=0;
+		let iw = this.img.width;
+		let ih = this.img.height;
+		let quadrant = [
+			{x:0,y:0,w:iw/2,h:ih/2},
+			{x:iw/2,y:0,w:iw/2,h:ih/2},
+			{x:iw/2,y:ih/2,w:iw/2,h:ih/2},
+			{x:0,y:ih/2,w:iw/2,h:ih/2}
+			]
+		for(let s=0;s<quadrant.length;s++){
+			let m = this.maxTries / quadrant.length;
+			let p = this.maxPoints / quadrant.length;
+			let q = quadrant[s];
+			while(m--){
+				x = floor(random(q.x,q.x+q.w));
+				y = floor(random(q.y,q.y+q.h));
+				b = red(this.img.get(x,y));
+				if(b < this.maxBrightness){
+					if(p-- <= 0){
+						break;
+					}
+					v = createVector(x,y);
+					v.brightness = b;
+					this.seeds.push( v );
+					this.onFound(v.x,v.y,v.brightness,++i,this.maxTries);
+				}
+			}
+		}
+		this.onFinish(this.seeds);
+	}
+	typeRandom(){
+		let x=0,y=0,b,v,i=0,m=this.maxTries,p=this.maxPoints;
+		while(m--){
+			x = floor(random(this.img.width));
+			y = floor(random(this.img.height));
+			b = red(this.img.get(x,y));
+			if(b < this.maxBrightness){
+				if(p-- <= 0){
+					break;
+				}
+				v = createVector(x,y);
+				v.brightness = b;
+				this.seeds.push( v );
+				this.onFound(x,y,b,++i,this.maxTries);
+			}
+		}
+		this.onFinish(this.seeds);
+	}
+	typeGrid(blk){
+		this.blk = blk || width/5;
+		let mid = this.blk/2;
+		let i=0;
+		for(let x=this.img.width;x>0;x-=this.blk){
+			for(let y=this.img.height;y>0;y-=this.blk){
+				let b = red(this.img.get(x+mid,y+mid));
+				if(b < this.maxBrightness){
+					let v = createVector(x+mid,y+mid);
+							v.brightness = b;
+					this.seeds.push( v );
+					this.onFound(x,y,b,++i,this.maxTries);
+				}
+			}
+		}
+		this.onFinish(this.seeds);
+	}
+	onFound(x=0,y=0,b=null,i=0,m=0){
+		push()
+		stroke(0);
+		strokeWeight(4);
+		point(x,y)
+		pop();
+	}
+	onFinish(seeds){}
+}
